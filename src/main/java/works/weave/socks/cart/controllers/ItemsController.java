@@ -20,6 +20,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 @RestController
 @RequestMapping(value = "/carts/{customerId:.*}/items")
 public class ItemsController {
+    // MAX_QUANTITY is the most of one item a cart may hold.
+    private static final int MAX_QUANTITY = 10;
+
     private final Logger LOG = getLogger(getClass());
 
     @Autowired
@@ -52,6 +55,10 @@ public class ItemsController {
             new CartResource(cartDAO, customerId).contents().get().add(newItem).run();
             return item;
         } else {
+            if (foundItem.get().quantity() >= MAX_QUANTITY) {
+                LOG.debug("Item already at the limit for user: " + customerId + ", " + foundItem.get());
+                return foundItem.get();
+            }
             Item newItem = new Item(foundItem.get(), foundItem.get().quantity() + 1);
             LOG.debug("Found item in cart. Incrementing for user: " + customerId + ", " + newItem);
             updateItem(customerId, newItem);
